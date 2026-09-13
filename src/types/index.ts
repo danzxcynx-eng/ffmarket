@@ -1,159 +1,177 @@
-// User & Auth Types
-export type UserRole = 'OWNER' | 'BUYER' | 'ADMIN'
+// User & Authentication Types
+export type UserRole = 'OWNER' | 'BUYER' | 'ADMIN';
 
 export interface User {
-  id: string
-  email: string
-  name: string
-  role: UserRole
-  avatar?: string
-  createdAt: string
-  verified: boolean
-  phone?: string
+  id: string;
+  email: string;
+  username: string;
+  role: UserRole;
+  avatar?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface AuthState {
-  user: User | null
-  isLoading: boolean
-  isAuthenticated: boolean
+export interface AuthSession {
+  user: User;
+  token: string;
+  expiresAt: Date;
 }
 
 // Account Listing Types
-export type AccountStatus = 'active' | 'sold' | 'draft' | 'pending_review' | 'rejected'
-export type ServerRegion = 'id' | 'global'
+export type ListingStatus = 'AVAILABLE' | 'RESERVED' | 'SOLD' | 'DRAFT' | 'SUSPENDED';
+
+export interface GameAccount {
+  id: string;
+  listingId: string;
+  accountName: string;
+  level: number;
+  serverRegion: string;
+  status: ListingStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export interface AccountListing {
-  id: string
-  title: string
-  price: number
-  description: string
-  level: number
-  diamonds: number
-  bundles: number
-  gunSkins: number
-  pets: number
-  characters: number
-  vehicles: number
-  achievements: number
-  rareItems: string[]
-  images: string[]
-  status: AccountStatus
-  region: ServerRegion
-  seller: {
-    id: string
-    name: string
-    verified: boolean
-    rating: number
-    totalSales: number
-  }
-  createdAt: string
-  updatedAt: string
+  id: string;
+  accountId: string;
+  title: string;
+  description: string;
+  price: number;
+  bundleCount: number;
+  gunSkinCount: number;
+  petCount: number;
+  characterCount: number;
+  vehicleCount: number;
+  images: string[];
+  category: 'SULTAN' | 'RARE' | 'VETERAN' | 'CHEAP' | 'FULL_SKIN' | 'PREMIUM';
+  status: ListingStatus;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-// Transaction Types
-export type TransactionStatus = 'pending' | 'paid' | 'processing' | 'completed' | 'refunded' | 'disputed'
+// Order Types
+export type OrderStatus =
+  | 'PENDING_PAYMENT'
+  | 'PAYMENT_FAILED'
+  | 'PAID'
+  | 'WAITING_DELIVERY'
+  | 'DELIVERED'
+  | 'COMPLETED'
+  | 'DISPUTED'
+  | 'REFUNDED'
+  | 'CANCELLED';
 
-export interface Transaction {
-  id: string
-  accountId: string
-  buyerId: string
-  sellerId: string
-  amount: number
-  serviceFee: number
-  totalAmount: number
-  status: TransactionStatus
-  paymentMethod: 'bank_transfer' | 'e_wallet' | 'credit_card'
-  accountDetails?: {
-    username: string
-    password: string // Encrypted
-    email: string
-  }
-  createdAt: string
-  completedAt?: string
-  expiresAt: string
+export interface Order {
+  id: string;
+  orderNumber: string;
+  listingId: string;
+  buyerId: string;
+  totalPrice: number;
+  serviceFee: number;
+  totalAmount: number;
+  status: OrderStatus;
+  paymentMethod?: string;
+  paymentProof?: string;
+  deliveryNotes?: string;
+  disputeReason?: string;
+  timeline: OrderTimeline[];
+  createdAt: Date;
+  updatedAt: Date;
+  completedAt?: Date;
 }
 
-// Chat Types
-export interface ChatMessage {
-  id: string
-  senderId: string
-  senderName: string
-  receiverId: string
-  content: string
-  image?: string
-  timestamp: string
-  read: boolean
-  warningShown?: boolean
+export interface OrderTimeline {
+  timestamp: Date;
+  status: OrderStatus;
+  description: string;
+  performedBy?: string;
 }
 
-export interface ChatRoom {
-  id: string
-  participants: string[]
-  lastMessage?: ChatMessage
-  updatedAt: string
+// Payment Types
+export type PaymentMethod = 'QRIS' | 'VIRTUAL_ACCOUNT' | 'E_WALLET' | 'BANK_TRANSFER';
+
+export interface Payment {
+  id: string;
+  orderId: string;
+  amount: number;
+  method: PaymentMethod;
+  status: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED';
+  reference?: string;
+  externalId?: string;
+  expiresAt?: Date;
+  verifiedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Review Types
 export interface Review {
-  id: string
-  transactionId: string
-  reviewerId: string
-  reviewerName: string
-  rating: number
-  comment: string
-  createdAt: string
+  id: string;
+  orderId: string;
+  reviewerId: string;
+  rating: number;
+  comment?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Chat Types
+export interface ChatMessage {
+  id: string;
+  orderId?: string;
+  senderId: string;
+  receiverId: string;
+  message: string;
+  attachments?: string[];
+  isRead: boolean;
+  createdAt: Date;
 }
 
 // Wishlist Types
-export interface WishlistItem {
-  id: string
-  userId: string
-  accountId: string
-  addedAt: string
+export interface Wishlist {
+  id: string;
+  userId: string;
+  listingId: string;
+  createdAt: Date;
 }
 
-// Dispute Types
-export type DisputeStatus = 'open' | 'in_review' | 'resolved' | 'closed'
-export type DisputeType = 'account_issue' | 'payment_issue' | 'seller_fraud' | 'other'
-
-export interface Dispute {
-  id: string
-  transactionId: string
-  reporterId: string
-  defendantId: string
-  type: DisputeType
-  reason: string
-  description: string
-  evidence: string[]
-  status: DisputeStatus
-  resolution?: string
-  createdAt: string
-  resolvedAt?: string
+// Admin Report Types
+export interface Report {
+  id: string;
+  reporterId: string;
+  targetType: 'LISTING' | 'USER' | 'ORDER';
+  targetId: string;
+  reason: string;
+  description?: string;
+  evidence?: string[];
+  status: 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'REJECTED';
+  resolution?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  resolvedAt?: Date;
 }
 
-// Dashboard Stats
-export interface AdminStats {
-  totalUsers: number
-  totalListings: number
-  totalTransactions: number
-  totalRevenue: number
-  pendingVerification: number
-  activeDisputes: number
-  reportsCount: number
-}
+// Notification Types
+export type NotificationType =
+  | 'ORDER_CREATED'
+  | 'PAYMENT_SUCCESS'
+  | 'PAYMENT_FAILED'
+  | 'DELIVERY_READY'
+  | 'ACCOUNT_DELIVERED'
+  | 'DELIVERY_CONFIRMED'
+  | 'DISPUTE_CREATED'
+  | 'DISPUTE_RESOLVED'
+  | 'REFUND_PROCESSED'
+  | 'ORDER_COMPLETED';
 
-export interface SellerStats {
-  totalListings: number
-  soldListings: number
-  totalRevenue: number
-  balance: number
-  rating: number
-  totalReviews: number
-}
-
-export interface BuyerStats {
-  totalPurchases: number
-  totalSpent: number
-  wishlists: number
-  reviews: number
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  relatedId?: string;
+  isRead: boolean;
+  createdAt: Date;
 }

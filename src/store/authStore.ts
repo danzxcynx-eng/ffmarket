@@ -1,59 +1,33 @@
-import { create } from 'zustand'
-import { User, AuthState } from '@/types'
+import { create } from 'zustand';
+import { User, AuthSession } from '@/types';
 
-interface AuthStore extends AuthState {
-  login: (user: User, token: string) => void
-  logout: () => void
-  setLoading: (loading: boolean) => void
-  setUser: (user: User | null) => void
-  isAdmin: () => boolean
-  isOwner: () => boolean
-  isBuyer: () => boolean
+interface AuthStore {
+  session: AuthSession | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  setSession: (session: AuthSession | null) => void;
+  setLoading: (loading: boolean) => void;
+  logout: () => void;
+  isOwner: () => boolean;
+  isBuyer: () => boolean;
 }
 
-const useAuthStore = create<AuthStore>((set, get) => ({
-  user: null,
-  isLoading: false,
+export const useAuthStore = create<AuthStore>((set, get) => ({
+  session: null,
+  isLoading: true,
   isAuthenticated: false,
-  
-  login: (user: User, token: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('authToken', token)
-      localStorage.setItem('user', JSON.stringify(user))
-    }
-    set({ user, isAuthenticated: true })
-  },
-  
-  logout: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('user')
-    }
-    set({ user: null, isAuthenticated: false })
-  },
-  
-  setLoading: (isLoading: boolean) => {
-    set({ isLoading })
-  },
-  
-  setUser: (user: User | null) => {
-    set({ user, isAuthenticated: !!user })
-  },
-  
-  isAdmin: () => {
-    const { user } = get()
-    return user?.role === 'OWNER' || user?.role === 'ADMIN'
-  },
-  
-  isOwner: () => {
-    const { user } = get()
-    return user?.role === 'OWNER'
-  },
-  
-  isBuyer: () => {
-    const { user } = get()
-    return user?.role === 'BUYER'
-  },
-}))
-
-export default useAuthStore
+  setSession: (session) =>
+    set({
+      session,
+      isAuthenticated: !!session,
+      isLoading: false,
+    }),
+  setLoading: (loading) => set({ isLoading: loading }),
+  logout: () =>
+    set({
+      session: null,
+      isAuthenticated: false,
+    }),
+  isOwner: () => get().session?.user.role === 'OWNER',
+  isBuyer: () => get().session?.user.role === 'BUYER',
+}));

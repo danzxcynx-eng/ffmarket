@@ -1,41 +1,51 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface CartItem {
-  accountId: string
-  price: number
-  title: string
+  listingId: string;
+  title: string;
+  price: number;
+  quantity: number;
 }
 
 interface CartStore {
-  items: CartItem[]
-  addItem: (item: CartItem) => void
-  removeItem: (accountId: string) => void
-  clearCart: () => void
-  getTotalPrice: () => number
+  items: CartItem[];
+  addItem: (item: CartItem) => void;
+  removeItem: (listingId: string) => void;
+  clearCart: () => void;
+  getTotalPrice: () => number;
+  getItemCount: () => number;
 }
 
-const useCartStore = create<CartStore>((set, get) => ({
-  items: [],
-  
-  addItem: (item: CartItem) => {
-    const items = get().items
-    const exists = items.find(i => i.accountId === item.accountId)
-    if (!exists) {
-      set({ items: [...items, item] })
+export const useCartStore = create<CartStore>(
+  persist(
+    (set, get) => ({
+      items: [],
+      addItem: (item) =>
+        set((state) => {
+          const existing = state.items.find((i) => i.listingId === item.listingId);
+          if (existing) {
+            return {
+              items: state.items.map((i) =>
+                i.listingId === item.listingId
+                  ? { ...i, quantity: i.quantity + item.quantity }
+                  : i
+              ),
+            };
+          }
+          return { items: [...state.items, item] };
+        }),
+      removeItem: (listingId) =>
+        set((state) => ({
+          items: state.items.filter((i) => i.listingId !== listingId),
+        })),
+      clearCart: () => set({ items: [] }),
+      getTotalPrice: () =>
+        get().items.reduce((total, item) => total + item.price * item.quantity, 0),
+      getItemCount: () => get().items.reduce((count, item) => count + item.quantity, 0),
+    }),
+    {
+      name: 'cart-storage',
     }
-  },
-  
-  removeItem: (accountId: string) => {
-    set({ items: get().items.filter(i => i.accountId !== accountId) })
-  },
-  
-  clearCart: () => {
-    set({ items: [] })
-  },
-  
-  getTotalPrice: () => {
-    return get().items.reduce((total, item) => total + item.price, 0)
-  },
-}))
-
-export default useCartStore
+  )
+);
